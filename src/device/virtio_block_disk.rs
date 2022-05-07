@@ -1,3 +1,4 @@
+use std::mem;
 use mmu::MemoryWrapper;
 
 // Based on Virtual I/O Device (VIRTIO) Version 1.1
@@ -58,7 +59,8 @@ impl VirtioBlockDisk {
 			status: 0,
 			interrupt_status: 0,
 			notify_clocks: Vec::new(),
-			contents: vec![]
+			contents: vec![],
+			max_addr: 0
 		}
 	}
 
@@ -81,6 +83,13 @@ impl VirtioBlockDisk {
 			let index = (i >> 3) as usize;
 			let pos = (i % 8) * 8;
 			self.contents[index] = (self.contents[index] & !(0xff << pos)) | ((contents[i] as u64) << pos);
+		}
+		let sector_len = SECTOR_SIZE as usize / mem::size_of::<u64>();
+		let alignment_len =
+			((self.contents.len() + sector_len) / sector_len) * sector_len - self.contents.len();
+		
+		for _ in 0..alignment_len {
+			self.contents.push(0);
 		}
 	}
 
@@ -156,6 +165,11 @@ impl VirtioBlockDisk {
 			0x10001105 => 0,
 			0x10001106 => 0,
 			0x10001107 => 0,
+			// Block size
+      0x10001114 => SECTOR_SIZE as u8,
+      0x10001115 => (SECTOR_SIZE >> 8) as u8,
+      0x10001116 => (SECTOR_SIZE >> 16) as u8,
+      0x10001117 => (SECTOR_SIZE >> 24) as u8,
 			_ => 0
 		}
 	}
