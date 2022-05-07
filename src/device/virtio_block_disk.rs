@@ -59,8 +59,7 @@ impl VirtioBlockDisk {
 			status: 0,
 			interrupt_status: 0,
 			notify_clocks: Vec::new(),
-			contents: vec![],
-			max_addr: 0
+			contents: vec![]
 		}
 	}
 
